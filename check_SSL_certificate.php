@@ -13,7 +13,7 @@
 	*                                                       *
 	\*******************************************************/
 	
-	$version = "0.0.1";
+	$version = "0.0.2";
 
 	class NagiosWarning  extends Exception {}
 	class NagiosCritical extends Exception {}
@@ -47,7 +47,6 @@
 
 		// Taken from https://serverfault.com/a/881415
 		exec( 'echo | openssl s_client -showcerts -servername '.$argv[1].' -connect '.$argv[1].':443 2>/dev/null | openssl x509 -inform pem -noout -text 2>&1', $output, $returnvar );
-var_dump($output);
 		// Catch responses without a certificate without wasting any more CPU
 		if( $output[0] == "unable to load certificate" ) {
                         throw new NagiosUnknown('Unable to load certificate');
@@ -82,6 +81,7 @@ var_dump($output);
 		if( $line_for_validity_end === null ) {
 			throw new NagiosUnknown('Unable to find valid end date in returned information');
 		}
+		
 		// Check our dates and times
 		if( !$start_date ) {
 			throw new NagiosUnknown('Unable to convert start date to valid date time');
@@ -98,6 +98,35 @@ var_dump($output);
                 } elseif( $end_date - time() < ( $days_for_warning * 60 * 60 * 24 ) ) {
 			throw new NagiosWarning('Certificate expires in '.(int)(($end_date - time())/60/60/24).' days (on '.date('c', $end_date).')');
 		} else {
+
+	                // Version 0.0.2 - using cURL, to check for revokation
+        	        // Set our initial values to null so we know if we got anything
+	                $valid = $valid_status = null;
+
+	                exec( "curl --ssl-reqd --cert-status $argv[1] -v -L 2>&1", $output, $returnvar );
+        	        for($i=0; $i < count($output); $i++) {
+                	        if( preg_match( '/^\*\s*(server certificate verification )(.*)$/m', $output[$i], $matches ) ) {
+                        	        $valid = ($matches[2]=='OK');
+	                        }
+        	                if( preg_match( '/^\*\s*(server certificate status verification )(.*)$/m', $output[$i], $matches ) ) {
+                	                if( $matches[2] == 'OK' ){
+                        	                $valid_status = true;
+                                	} else {
+                                        	$valid_status = $matches[2].': '.$output[$i+1];
+	                                }
+					break;
+        	                }
+                        }
+	
+		        // Check certificate status
+                	if( $valid !== null && $valid !== true ){
+                        	throw new NagiosCritical('Certificate not valid!');
+                	}
+	                if( $valid_status !== null && $valid_status !== true ){
+        	                 throw new NagiosCritical('Certificate status - '.$valid_status);
+                	}
+	                // End of version 0.0.2
+
 			throw new NagiosOK('Certificate expires '.(int)(($end_date - time())/60/60/24).' days (on '.date('c', $end_date).')');
 		}
 
