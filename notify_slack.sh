@@ -29,12 +29,12 @@ then
     ICON=":warning:"
 elif [ "$NAGIOS_SERVICESTATE" = "OK" ]
 then
-    ICON=":white_check_mark:"
+    ICON=":ballot_box_with_check:"
 elif [ "$NAGIOS_SERVICESTATE" = "UNKNOWN" ]
 then
     ICON=":question:"
 else
-    ICON=":white_medium_square:"
+    ICON=":speech_ballon:"
 fi
 
 #Send message to Slack
