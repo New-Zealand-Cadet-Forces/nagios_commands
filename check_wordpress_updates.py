@@ -238,6 +238,9 @@ if not "login_error" in html:
     elif "The following themes have new versions available." in updatepage:
         print "WARNING - WordPress theme upgrades available"
         sys.exit(STATE_WARNING)
+    elif not "Your translations are all up to date." in updatepage:
+        print "WARNING - WordPress translation upgrades available"
+        sys.exit(STATE_WARNING)
 
     print "OK - No messages about upgrades located"
     sys.exit(STATE_OK)
