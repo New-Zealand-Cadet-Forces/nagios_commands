@@ -98,7 +98,7 @@
                 } elseif( $end_date - time() < ( $days_for_warning * 60 * 60 * 24 ) ) {
 			throw new NagiosWarning('Certificate expires in '.(int)(($end_date - time())/60/60/24).' days (on '.date('c', $end_date).')');
 		} else {
-
+/*
 	                // Version 0.0.2 - using cURL, to check for revokation
         	        // Set our initial values to null so we know if we got anything
 	                $valid = $valid_status = null;
@@ -106,7 +106,11 @@
 	                exec( "curl --ssl-reqd --cert-status $argv[1] -v -L 2>&1", $output, $returnvar );
         	        for($i=0; $i < count($output); $i++) {
                 	        if( preg_match( '/^\*\s*(server certificate verification )(.*)$/m', $output[$i], $matches ) ) {
-                        	        $valid = ($matches[2]=='OK');
+					if( $matches[2] == 'OK' ) {
+						$valid=true;
+					} else {
+	                        	        $valid = $matches[2];
+					}
 	                        }
         	                if( preg_match( '/^\*\s*(server certificate status verification )(.*)$/m', $output[$i], $matches ) ) {
                 	                if( $matches[2] == 'OK' ){
@@ -120,13 +124,13 @@
 	
 		        // Check certificate status
                 	if( $valid !== null && $valid !== true ){
-                        	throw new NagiosCritical('Certificate not valid!');
+                        	throw new NagiosCritical('Certificate not valid - '.$valid);
                 	}
 	                if( $valid_status !== null && $valid_status !== true ){
         	                 throw new NagiosCritical('Certificate status - '.$valid_status);
                 	}
 	                // End of version 0.0.2
-
+*/
 			throw new NagiosOK('Certificate expires '.(int)(($end_date - time())/60/60/24).' days (on '.date('c', $end_date).')');
 		}
 
